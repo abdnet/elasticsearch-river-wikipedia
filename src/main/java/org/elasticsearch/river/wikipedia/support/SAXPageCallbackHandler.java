@@ -17,6 +17,8 @@ public class SAXPageCallbackHandler extends DefaultHandler {
     private String currentWikitext;
     private String currentTitle;
     private String currentID;
+    private String currentTimestamp;      //currentTimestamp: 2012-11-17T01:32:21Z
+    private String currentUsername;
 
     public SAXPageCallbackHandler(PageCallbackHandler ph) {
         pageHandler = ph;
@@ -29,6 +31,8 @@ public class SAXPageCallbackHandler extends DefaultHandler {
             currentWikitext = "";
             currentTitle = "";
             currentID = "";
+            currentTimestamp = "";
+            currentUsername = "";
         }
     }
 
@@ -36,6 +40,8 @@ public class SAXPageCallbackHandler extends DefaultHandler {
         if (qName.equals("page")) {
             currentPage.setTitle(currentTitle);
             currentPage.setID(currentID);
+            currentPage.setTimestamp(currentTimestamp);
+            currentPage.setUsername(currentUsername);
             currentPage.setWikiText(currentWikitext);
             pageHandler.process(currentPage);
         }
@@ -55,6 +61,10 @@ public class SAXPageCallbackHandler extends DefaultHandler {
             currentID = new String(ch, start, length);
         } else if (currentTag.equals("text")) {
             currentWikitext = currentWikitext.concat(new String(ch, start, length));
+        }  else if (currentTag.equals("timestamp")) {
+            currentTimestamp = currentTimestamp.concat(new String(ch, start, length));
+        } else if (currentTag.equals("username")) {
+            currentUsername = currentUsername.concat(new String(ch, start, length));
         }
     }
 }

@@ -31,6 +31,8 @@ public class WikiPage {
     private String title = null;
     private WikiTextParser wikiTextParser = null;
     private String id = null;
+    private String timestamp = null;
+    private String username = null;
 
     /**
      * Set the page title. This is not intended for direct use.
@@ -146,5 +148,21 @@ public class WikiPage {
 
     public String getID() {
         return id;
+    }
+
+    public String getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(String timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 }
