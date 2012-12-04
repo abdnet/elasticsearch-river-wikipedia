@@ -1,4 +1,7 @@
-This fork works the same way as the "original plugin":https://github.com/elasticsearch/elasticsearch-river-wikipedia but adds the @timestamp@ and @username@ of the WikiPage.
+This fork works the same way as the [original plugin](https://github.com/elasticsearch/elasticsearch-river-wikipedia) but adds the following data of the WikiPage:
+- timestamp
+- username
+
 
 
 License
