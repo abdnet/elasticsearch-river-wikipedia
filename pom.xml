@@ -18,10 +18,10 @@
         </license>
     </licenses>
     <scm>
-        <connection>scm:git:git@github.com:elasticsearch/elasticsearch-river-wikipedia.git</connection>
-        <developerConnection>scm:git:git@github.com:elasticsearch/elasticsearch-river-wikipedia.git
+        <connection>scm:git:git@github.com:tlrx/elasticsearch-river-wikipedia.git</connection>
+        <developerConnection>scm:git:git@github.com:tlrx/elasticsearch-river-wikipedia.git
         </developerConnection>
-        <url>http://github.com/elasticsearch/elasticsearch-river-wikipedia</url>
+        <url>http://github.com/tlrx/elasticsearch-river-wikipedia</url>
     </scm>
 
     <parent>
