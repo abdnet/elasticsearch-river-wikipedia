@@ -34,13 +34,6 @@
         <elasticsearch.version>0.19.0</elasticsearch.version>
     </properties>
 
-    <repositories>
-        <repository>
-            <id>sonatype</id>
-            <url>http://oss.sonatype.org/content/repositories/releases/</url>
-        </repository>
-    </repositories>
-
     <dependencies>
         <dependency>
             <groupId>org.elasticsearch</groupId>

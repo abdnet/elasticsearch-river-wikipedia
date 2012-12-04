@@ -40,7 +40,7 @@ public class SAXPageCallbackHandler extends DefaultHandler {
         if (qName.equals("page")) {
             currentPage.setTitle(currentTitle);
             currentPage.setID(currentID);
-            currentPage.setTimestamp(currentTimestamp);
+            currentPage.setTimestamp(currentTimestamp.trim());
             currentPage.setUsername(currentUsername);
             currentPage.setWikiText(currentWikitext);
             pageHandler.process(currentPage);
