@@ -20,6 +20,7 @@
 package org.elasticsearch.river.wikipedia.support;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Data structures for a wikipedia page.
@@ -134,7 +135,7 @@ public class WikiPage {
     /**
      * @return a list of links contained in the page
      */
-    public List<String> getLinks() {
+    public Set<String> getLinks() {
         return wikiTextParser.getLinks();
     }
 

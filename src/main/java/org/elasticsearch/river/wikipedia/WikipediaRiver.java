@@ -43,7 +43,10 @@ import org.elasticsearch.river.wikipedia.support.WikiXMLParserFactory;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -65,6 +68,10 @@ public class WikipediaRiver extends AbstractRiverComponent implements River {
 
     private final int dropThreshold;
 
+    private final int maxLinks;
+
+    private final Set<String> excludes;
+
 
     private final AtomicInteger onGoingBulks = new AtomicInteger();
 
@@ -81,13 +88,24 @@ public class WikipediaRiver extends AbstractRiverComponent implements River {
         this.client = client;
 
         String url = "http://download.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles.xml.bz2";
+        int maxLinks = 5;
+        excludes = new HashSet<String>();
         if (settings.settings().containsKey("wikipedia")) {
             Map<String, Object> wikipediaSettings = (Map<String, Object>) settings.settings().get("wikipedia");
             url = XContentMapValues.nodeStringValue(wikipediaSettings.get("url"), url);
+            maxLinks = XContentMapValues.nodeIntegerValue(wikipediaSettings.get("max_links"), 5);
+            if (XContentMapValues.isArray(wikipediaSettings.get("excludes"))) {
+                for (Object exclude : (List) wikipediaSettings.get("excludes")) {
+                    if (exclude instanceof String) {
+                        excludes.add((String) exclude);
+                    }
+                }
+            }
         }
 
         logger.info("creating wikipedia stream river for [{}]", url);
         this.url = new URL(url);
+        this.maxLinks = maxLinks;
 
         if (settings.settings().containsKey("index")) {
             Map<String, Object> indexSettings = (Map<String, Object>) settings.settings().get("index");
@@ -122,7 +140,7 @@ public class WikipediaRiver extends AbstractRiverComponent implements River {
         currentRequest = client.prepareBulk();
         WikiXMLParser parser = WikiXMLParserFactory.getSAXParser(url);
         try {
-            parser.setPageCallback(new PageCallback());
+            parser.setPageCallback(new PageCallback(this.excludes, this.maxLinks));
         } catch (Exception e) {
             logger.error("failed to create parser", e);
             return;
@@ -162,6 +180,52 @@ public class WikipediaRiver extends AbstractRiverComponent implements River {
 
     private class PageCallback implements PageCallbackHandler {
 
+        boolean ignoreTitle = false;
+        boolean ignoreTimestamp = false;
+        boolean ignoreUsername = false;
+        boolean ignoreRedirect = false;
+        boolean ignoreSpecial = false;
+        boolean ignoreStub = false;
+        boolean ignoreText = false;
+        boolean ignoreDisambiguation = false;
+        boolean ignoreCategory = false;
+        boolean ignoreLink = false;
+        Integer maxLinks = 100;
+
+        private PageCallback() {
+        }
+
+        private PageCallback(Set<String> excludes, Integer maxLinks) {
+            if (excludes != null) {
+                for (String exclude : excludes) {
+                    if ("title".equalsIgnoreCase(exclude)) {
+                        ignoreTitle = true;
+                    } else if ("timestamp".equalsIgnoreCase(exclude)) {
+                        ignoreTimestamp = true;
+                    } else if ("username".equalsIgnoreCase(exclude)) {
+                        ignoreUsername = true;
+                    } else if ("text".equalsIgnoreCase(exclude)) {
+                        ignoreText = true;
+                    } else if ("redirect".equalsIgnoreCase(exclude)) {
+                        ignoreRedirect = true;
+                    } else if ("special".equalsIgnoreCase(exclude)) {
+                        ignoreSpecial = true;
+                    } else if ("stub".equalsIgnoreCase(exclude)) {
+                        ignoreStub = true;
+                    } else if ("disambiguation".equalsIgnoreCase(exclude)) {
+                        ignoreDisambiguation = true;
+                    } else if ("category".equalsIgnoreCase(exclude)) {
+                        ignoreCategory = true;
+                    } else if ("link".equalsIgnoreCase(exclude)) {
+                        ignoreLink = true;
+                    }
+                }
+            }
+            if (maxLinks != null) {
+                this.maxLinks = maxLinks;
+            }
+        }
+
         @Override
         public void process(WikiPage page) {
             if (closed) {
@@ -173,26 +237,57 @@ public class WikipediaRiver extends AbstractRiverComponent implements River {
             }
             try {
                 XContentBuilder builder = XContentFactory.jsonBuilder().startObject();
-                builder.field("title", title);
-                builder.field("timestamp", page.getTimestamp());
-                builder.field("username", page.getUsername());
-                builder.field("text", page.getText());
-                builder.field("redirect", page.isRedirect());
-                builder.field("special", page.isSpecialPage());
-                builder.field("stub", page.isStub());
-                builder.field("disambiguation", page.isDisambiguationPage());
-
-                builder.startArray("category");
-                for (String s : page.getCategories()) {
-                    builder.value(s);
+                if (!ignoreTitle) {
+                    builder.field("title", title);
                 }
-                builder.endArray();
-
-                builder.startArray("link");
-                for (String s : page.getLinks()) {
-                    builder.value(s);
+                if (!ignoreTimestamp) {
+                    builder.field("timestamp", page.getTimestamp());
                 }
-                builder.endArray();
+                if (!ignoreUsername) {
+                    builder.field("username", page.getUsername());
+                }
+
+                if (!ignoreText) {
+                    builder.field("text", page.getText());
+                }
+
+                if (!ignoreRedirect) {
+                    builder.field("redirect", page.isRedirect());
+                }
+
+                if (!ignoreSpecial) {
+                    builder.field("special", page.isSpecialPage());
+                }
+
+                if (!ignoreStub) {
+                    builder.field("stub", page.isStub());
+                }
+
+                if (!ignoreDisambiguation) {
+                    builder.field("disambiguation", page.isDisambiguationPage());
+                }
+
+                if (!ignoreCategory) {
+                    builder.startArray("category");
+                    for (String s : page.getCategories()) {
+                        builder.value(s);
+                    }
+                    builder.endArray();
+                }
+
+
+                if (!ignoreLink) {
+                    int count = 1;
+                    builder.startArray("link");
+                    for (String s : page.getLinks()) {
+                        if ((maxLinks != null) && (count > maxLinks)) {
+                            break;
+                        }
+                        builder.value(s);
+                        count++;
+                    }
+                    builder.endArray();
+                }
 
                 builder.endObject();
                 // For now, we index (and not create) since we need to keep track of what we indexed...

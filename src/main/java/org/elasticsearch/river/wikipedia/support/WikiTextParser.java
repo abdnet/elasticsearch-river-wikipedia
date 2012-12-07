@@ -20,6 +20,8 @@
 package org.elasticsearch.river.wikipedia.support;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,7 +35,7 @@ public class WikiTextParser {
 
     private String wikiText = null;
     private ArrayList<String> pageCats = null;
-    private ArrayList<String> pageLinks = null;
+    private Set<String> pageLinks = null;
     private boolean redirect = false;
     private String redirectString = null;
     private static Pattern redirectPattern =
@@ -79,7 +81,7 @@ public class WikiTextParser {
         return pageCats;
     }
 
-    public ArrayList<String> getLinks() {
+    public Set<String> getLinks() {
         if (pageLinks == null) parseLinks();
         return pageLinks;
     }
@@ -95,7 +97,7 @@ public class WikiTextParser {
     }
 
     private void parseLinks() {
-        pageLinks = new ArrayList<String>();
+        pageLinks = new HashSet<String>();
 
         Pattern catPattern = Pattern.compile("\\[\\[(.*?)\\]\\]", Pattern.MULTILINE);
         Matcher matcher = catPattern.matcher(wikiText);

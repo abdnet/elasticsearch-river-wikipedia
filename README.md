@@ -2,6 +2,23 @@ This fork works the same way as the [original plugin](https://github.com/elastic
 - timestamp
 - username
 
+It also possible to limit the number of links to index, as well as excluding some data:
+
+
+curl -XPOST "localhost:9200/_river/my_river/_meta" -d "{
+	"type": "wikipedia",
+	"wikipedia": {
+		"url": "....",
+        "max_links": 3,
+		"excludes": ["special", "stub", "disambiguation", "category", "redirect", "link"]
+	},
+	"index": {
+	    "index": "my_river",
+        "type": "page",
+        "bulk_size": 500
+	}
+}"
+
 
 
 License
